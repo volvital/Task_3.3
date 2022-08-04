@@ -38,6 +38,8 @@ Promise.all([getPersonPage1, getPersonPage2, getPersonPage3])
     })
     .finally(invisibleSpinner);
 
+
+
 class Swapi {
   constructor(){}
 
