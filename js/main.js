@@ -31,10 +31,10 @@ const getPersonPage3 = fetch(path1);
 
 Promise.all([getPersonPage1, getPersonPage2, getPersonPage3])
     .then(() => {
-        console.log('all promises are done!');
+        alert('all promises are done!');
     })
     .catch(() => {
-        console.error("Error!!!");
+        alert("Error!!!");
     })
     .finally(invisibleSpinner);
 
@@ -56,8 +56,9 @@ function loadingPage(path) {
           $ul.removeChild($ul.firstChild);
       }
   }
-    fetch(path)
-        .then((response) => response.json())
+    const swapiApi = new Swapi();
+    swapiApi
+        .getPeople(path)
         .then((json) => {
             json.results.forEach(person => {
                 addPersonItem(person);
