@@ -1,5 +1,5 @@
 const $ul = document.querySelector('#people_list');
-const $visible = document.querySelector('div.visible');
+const $visible = document.querySelector('div#spinner-visible');
 
 const addPersonItem = (person) => {
     const secondFilm = _.get(person, '["films"][1]', 'Unknown');
@@ -14,11 +14,11 @@ const addPersonItem = (person) => {
 };
 
 function invisibleSpinner(){
-    return $visible.setAttribute("class", "invisible");
+    return $visible.className = "invisible";
 }
 
 function visibleSpinner() {
-    return $visible.setAttribute("class", "visible");
+    return $visible.className = "visible";
 }
 
 const path1 = 'https://swapi.dev/api/people/?page=1';
@@ -54,18 +54,21 @@ class Swapi {
 
 function loadingPage(path) {
   if($ul.hasChildNodes()){
+    visibleSpinner();
       while ($ul.firstChild) {
           $ul.removeChild($ul.firstChild);
       }
   }
-    const swapiApi = new Swapi();
+
     swapiApi
         .getPeople(path)
         .then((json) => {
             json.results.forEach(person => {
                 addPersonItem(person);
             });
-        });
+        })
+        .finally(invisibleSpinner);
 }
 
+const swapiApi = new Swapi();
 loadingPage(path1);
