@@ -1,17 +1,5 @@
-const $ul = document.querySelector('#people_list');
+const $ul = document.querySelector('#people_list1');
 const $visible = document.querySelector('div#spinner-visible');
-
-const addPersonItem = (person) => {
-    const secondFilm = _.get(person, '["films"][1]', 'Unknown');
-    const $li = document.createElement('li');
-    $li.className = 'list-group-item';
-    $li.innerText = `
-        ${person['name']}
-        (birth year: ${person['birth_year']})
-        - second film: ${secondFilm}
-    `;
-    $ul.appendChild($li);
-};
 
 function invisibleSpinner(){
     return $visible.className = "invisible";
@@ -21,15 +9,108 @@ function visibleSpinner() {
     return $visible.className = "visible";
 }
 
-const path1 = 'https://swapi.dev/api/people/?page=1';
-const path2 = 'https://swapi.dev/api/people/?page=2';
-const path3 = 'https://swapi.dev/api/people/?page=3';
+const path = 'https://swapi.dev/api/people/?page=';
 
-const getPersonPage1 = fetch(path1);
-const getPersonPage2 = fetch(path1);
-const getPersonPage3 = fetch(path1);
+const getPersonPage1 = fetch(path + 1);
+const getPersonPage2 = fetch(path + 2);
+const getPersonPage3 = fetch(path + 3);
 
-Promise.all([getPersonPage1, getPersonPage2, getPersonPage3])
+
+
+class Swapi {
+    $parentList = null;
+    $parentPaginate = null;
+
+    constructor({ parentList, parentPaginate }){
+        this.$parentList = parentList;
+        this.$parentPaginate = parentPaginate;
+    }
+
+    _page = 1;
+    get page(){
+        return this._page;
+    }
+
+    set page(currentPage){
+        this._page = currentPage;
+
+        const $activeItem = this.$parentPaginate.querySelectorAll('a');
+        if ($activeItem.length) {
+            $activeItem.forEach(($item, index) => {
+                $item.classList.toggle('active', index + 1 === currentPage);
+            })
+        }
+        this.getPeople(currentPage);
+    }
+
+    _isLoading = true;
+    get isLoading(){
+        return this._isLoading;
+    }
+
+    set isLoading(value){
+        this._isLoading = value;
+        document.querySelector('.spinner-border').classList.toggle('d-none', !value);
+    }
+
+    async getPeople (page) {
+        if(this.$parentList.hasChildNodes()){
+            visibleSpinner();
+            while (this.$parentList.firstChild) {
+                this.$parentList.removeChild(this.$parentList.firstChild);
+            }
+        }
+        const result = await fetch(path + page);
+        const data = await result.json();
+        this.renderList(data.results);
+        invisibleSpinner();
+        return data;
+    }
+
+    renderList(list) {
+                list.forEach(person => {
+                    this.addPersonItem(person);
+                });
+            }
+
+    addPersonItem = (person) => {
+        const secondFilm = _.get(person, '["films"][1]', 'Unknown');
+        const $li = document.createElement('li');
+        $li.className = 'list-group-item';
+        $li.innerText = `
+            ${person['name']}
+            (birth year: ${person['birth_year']})
+            - second film: ${secondFilm}
+        `;
+        this.$parentList.appendChild($li);
+    }
+
+    renderPaginate(count) {
+        const itemLength = Math.ceil(count / 10);
+
+        for(let i = 1; i <= itemLength; i++) {
+            // <li class="page-item"><a class="page-link" href="#">1</a></li>
+            const $li = document.createElement('li');
+            $li.className = 'page-item';
+            const $a = document.createElement('a');
+            $a.className = 'page-link';
+            $a.href = '#';
+            if (i === 1) {
+                $a.className += ' active';
+            }
+            $a.innerText = i;
+            $a.addEventListener('click', (event) => {
+                this.page = i;
+                event.preventDefault();
+            });
+            $li.appendChild($a);
+            this.$parentPaginate.appendChild($li);
+        }
+    }
+}
+
+function getPromise (item) {
+    Promise.all(item)
     .then(() => {
         alert('all promises are done!');
     })
@@ -37,38 +118,13 @@ Promise.all([getPersonPage1, getPersonPage2, getPersonPage3])
         alert("Error!!!");
     })
     .finally(invisibleSpinner);
-
-
-
-class Swapi {
-  constructor(){}
-
-  async getPeople (page) {
-      const result = await fetch(page);
-      const data = await result.json();
-      // this.page = page;
-      return data;
-  }
-
 }
 
-function loadingPage(path) {
-  if($ul.hasChildNodes()){
-    visibleSpinner();
-      while ($ul.firstChild) {
-          $ul.removeChild($ul.firstChild);
-      }
-  }
+const swapiApi = new Swapi({
+    parentList: document.querySelector('#people_list'),
+    parentPaginate: document.querySelector('.pagination'),
+});
 
-    swapiApi
-        .getPeople(path)
-        .then((json) => {
-            json.results.forEach(person => {
-                addPersonItem(person);
-            });
-        })
-        .finally(invisibleSpinner);
-}
-
-const swapiApi = new Swapi();
-loadingPage(path1);
+swapiApi.getPeople(1).then((res) => {
+    swapiApi.renderPaginate(res.count);
+});
