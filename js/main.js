@@ -10,14 +10,13 @@ function visibleSpinner() {
 
 const path = 'https://swapi.dev/api/people/?page=';
 
-// function getPersonPage(count){
-//     const itemLength = Math.ceil(count / 10);
-//     let arrPerson = [];
-//     for(let i = 1; i < itemLength; i+=1){
-//         arrPerson.push(fetch(path + i));
-//     }
-//     return arrPerson;
-// }
+function getPersonPage(count){
+    let arrPerson = [];
+    for(let i = 1; i <= count; i+=1){
+        arrPerson.push(fetch(path + i));
+    }
+    return arrPerson;
+}
 
 class Swapi {
     $parentList = null;
@@ -81,7 +80,7 @@ class Swapi {
         const itemLength = Math.ceil(count / 10);
 
         for(let i = 0; i <= itemLength + 1; i++) {
-            // <li class="page-item"><a class="page-link" href="#">1</a></li>
+
             const $li = document.createElement('li');
             $li.className = 'page-item';
             const $a = document.createElement('a');
@@ -117,16 +116,16 @@ class Swapi {
     }
 }
 
-// function getPromise (item) {
-//     Promise.all(item)
-//     .then(() => {
-//         alert('all promises are done!');
-//     })
-//     .catch(() => {
-//         alert("Error!!!");
-//     })
-//     .finally(invisibleSpinner);
-// }
+function getPromise (item) {
+    Promise.all(item)
+    .then(() => {
+        alert('all promises are done!');
+    })
+    .catch(() => {
+        alert("Error!!!");
+    })
+    .finally(invisibleSpinner);
+}
 
 const swapiApi = new Swapi({
     parentList: document.querySelector('#people_list'),
@@ -135,4 +134,5 @@ const swapiApi = new Swapi({
 
 swapiApi.getPeople(1).then((res) => {
     swapiApi.renderPaginate(res.count);
+    getPromise(getPersonPage(res.count));
 });
