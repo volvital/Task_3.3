@@ -1,4 +1,3 @@
-const $ul = document.querySelector('#people_list1');
 const $visible = document.querySelector('div#spinner-visible');
 
 function invisibleSpinner(){
@@ -11,11 +10,14 @@ function visibleSpinner() {
 
 const path = 'https://swapi.dev/api/people/?page=';
 
-const getPersonPage1 = fetch(path + 1);
-const getPersonPage2 = fetch(path + 2);
-const getPersonPage3 = fetch(path + 3);
-
-
+// function getPersonPage(count){
+//     const itemLength = Math.ceil(count / 10);
+//     let arrPerson = [];
+//     for(let i = 1; i < itemLength; i+=1){
+//         arrPerson.push(fetch(path + i));
+//     }
+//     return arrPerson;
+// }
 
 class Swapi {
     $parentList = null;
@@ -34,23 +36,16 @@ class Swapi {
     set page(currentPage){
         this._page = currentPage;
 
-        const $activeItem = this.$parentPaginate.querySelectorAll('a');
+        const $activeItem = this.$parentPaginate.querySelectorAll('li');
+
         if ($activeItem.length) {
+            $activeItem[0].classList.toggle('disabled', currentPage === 1);
             $activeItem.forEach(($item, index) => {
-                $item.classList.toggle('active', index + 1 === currentPage);
+                $item.classList.toggle('active', index === currentPage);
             })
+            $activeItem[$activeItem.length - 1].classList.toggle('disabled', currentPage === $activeItem.length - 2);
         }
         this.getPeople(currentPage);
-    }
-
-    _isLoading = true;
-    get isLoading(){
-        return this._isLoading;
-    }
-
-    set isLoading(value){
-        this._isLoading = value;
-        document.querySelector('.spinner-border').classList.toggle('d-none', !value);
     }
 
     async getPeople (page) {
@@ -77,10 +72,7 @@ class Swapi {
         const secondFilm = _.get(person, '["films"][1]', 'Unknown');
         const $li = document.createElement('li');
         $li.className = 'list-group-item';
-        $li.innerText = `
-            ${person['name']}
-            (birth year: ${person['birth_year']})
-            - second film: ${secondFilm}
+        $li.innerText = `${person['name']} (birth year: ${person['birth_year']}) - second film: ${secondFilm}
         `;
         this.$parentList.appendChild($li);
     }
@@ -88,7 +80,7 @@ class Swapi {
     renderPaginate(count) {
         const itemLength = Math.ceil(count / 10);
 
-        for(let i = 1; i <= itemLength; i++) {
+        for(let i = 0; i <= itemLength + 1; i++) {
             // <li class="page-item"><a class="page-link" href="#">1</a></li>
             const $li = document.createElement('li');
             $li.className = 'page-item';
@@ -96,33 +88,49 @@ class Swapi {
             $a.className = 'page-link';
             $a.href = '#';
             if (i === 1) {
-                $a.className += ' active';
+                $li.className += ' active';
             }
+            if(i === 0){
+                $li.className += ' disabled';
+                $a.innerText = 'Last';
+                $a.addEventListener('click', (event) => {
+                    this.page -= 1;
+                    event.preventDefault();
+                });
+            } else if(i === itemLength + 1){
+                $a.innerText = 'Next';
+                $a.addEventListener('click', (event) => {
+                    this.page += 1;
+                    event.preventDefault();
+                });
+            } else {
             $a.innerText = i;
             $a.addEventListener('click', (event) => {
                 this.page = i;
                 event.preventDefault();
             });
+            }
+
             $li.appendChild($a);
             this.$parentPaginate.appendChild($li);
         }
     }
 }
 
-function getPromise (item) {
-    Promise.all(item)
-    .then(() => {
-        alert('all promises are done!');
-    })
-    .catch(() => {
-        alert("Error!!!");
-    })
-    .finally(invisibleSpinner);
-}
+// function getPromise (item) {
+//     Promise.all(item)
+//     .then(() => {
+//         alert('all promises are done!');
+//     })
+//     .catch(() => {
+//         alert("Error!!!");
+//     })
+//     .finally(invisibleSpinner);
+// }
 
 const swapiApi = new Swapi({
     parentList: document.querySelector('#people_list'),
-    parentPaginate: document.querySelector('.pagination'),
+    parentPaginate: document.querySelector('.pagination')
 });
 
 swapiApi.getPeople(1).then((res) => {
